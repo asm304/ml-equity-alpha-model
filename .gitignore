@@ -1,0 +1,19 @@
+# --- Data files (DO NOT upload raw or intermediate data)
+data/*
+*.parquet
+*.csv
+
+# --- Jupyter notebook temporary files
+.ipynb_checkpoints/
+
+# --- Python cache files
+__pycache__/
+*.pyc
+
+# --- Virtual environments (any name)
+env/
+venv/
+.venv/
+
+# --- OS files
+.DS_Store
