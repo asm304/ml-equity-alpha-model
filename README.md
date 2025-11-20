@@ -1,233 +1,186 @@
-📈 ML Equity Alpha Model
+# 📈 ML Equity Alpha Model
 
-A machine-learning equity alpha model using Ridge and XGBoost with walk-forward cross-validation, z-score portfolio construction, and long/short backtesting over the Russell 3000 universe.
+A machine-learning equity alpha model using **Ridge Regression** and **XGBoost**, with walk-forward cross-validation, z-score portfolio construction, and long/short backtesting over the **Russell 3000** universe.
 
-🚀 Overview
+---
 
-This project builds a cross-sectional equity return prediction model using machine learning and evaluates it in a realistic walk-forward investment simulation.
+## 🚀 Overview
 
-The workflow replicates how a quantitative equity team develops and evaluates stock-ranking signals:
+This project builds a **cross-sectional equity return prediction model** and evaluates it using a realistic walk-forward investment simulation.
 
-Data ingestion + feature engineering
+The workflow mimics how a quantitative equity team develops stock-selection signals:
 
-Target creation (next-month returns)
+- Data ingestion + feature engineering  
+- Target creation (next-month returns)  
+- Model training (Ridge, XGBoost)  
+- Walk-forward cross-validation  
+- Portfolio construction (z-score weights)  
+- Backtesting (long-only, short-only, long–short)  
+- Performance analytics (returns, Sharpe, drawdowns, turnover)
 
-Model training (Ridge, XGBoost)
+All modeling uses only **past information** at each point in time (no look-ahead bias).
 
-Walk-forward cross-validation
+---
 
-Portfolio construction via z-score weighting
+## 🧠 Methodology
 
-Backtesting long-only, short-only, and long-short portfolios
+### **1. Universe & Target**
 
-Performance analytics (returns, Sharpe, drawdowns, turnover)
+- **Universe:** Russell 3000  
+- **Frequency:** Monthly  
 
-All modeling uses only past information at each point in time, avoiding look-ahead bias.
+**Target variable (next-month total return):**
 
-🗂 Repository Structure
-ml-equity-alpha-model/
-│
-├── 01_data_prep.ipynb         # Data loading, cleaning, feature creation
-├── 02_feature_engineering.ipynb
-├── 03_modeling.ipynb          # Ridge + XGBoost training and predictions
-├── 04_backtest.ipynb          # Z-score weighting and portfolio simulation
-├── 05_report.ipynb            # Summary charts, stats, and final analysis
-│
-├── data/                      # Intermediate processed data (ignored in Git)
-├── README.md
-├── .gitignore
-└── requirements.txt (optional)
+\[
+r_{i,t+1} = \frac{P_{i,t+1}}{P_{i,t}} - 1
+\]
 
-🧪 Methodology
-1. Universe & Target
+---
 
-Universe: Russell 3000 constituents
+### **2. Features**
 
-Frequency: Monthly
+The model uses a diverse set of cross-sectional predictors:
 
-Target variable:
+- Price-based factors (momentum, volatility, reversals)  
+- Fundamental ratios  
+- Rolling statistical features  
+- Sector/dummy encodings  
+- Technical indicators  
 
-𝑟
-𝑖
-,
-𝑡
-+
-1
-=
-𝑃
-𝑖
-,
-𝑡
-+
-1
-𝑃
-𝑖
-,
-𝑡
-−
-1
-r
-i,t+1
-	​
+All features are **lagged** so only past information is used.
 
-=
-P
-i,t
-	​
+---
 
-P
-i,t+1
-	​
+### **3. Models Tested**
 
-	​
+#### ✅ **Ridge Regression (best performer)**  
+- Stable  
+- Interpretable  
+- Resistant to multicollinearity  
+- Strong information coefficient stability over time  
 
-−1
+#### ⚠️ **XGBoost**
+- Useful for nonlinear relationships  
+- Higher variance  
+- Underperformed Ridge on this dataset  
 
-(Next-month total return)
+➡️ **Final backtest uses Ridge as the primary model.**
 
-2. Features
+---
 
-The model uses a diverse set of cross-sectional predictors such as:
+### **4. Walk-Forward Training**
 
-Price-based factors (momentum, volatility, reversals)
+For each month **t**:
 
-Fundamental ratios
+1. Use the prior **36 months** as the training window  
+2. Fit the model on that window  
+3. Predict returns for month **t+1**  
+4. Move forward one month  
+5. Repeat  
 
-Rolling statistical features
+This replicates real quant workflows and prevents information leakage.
 
-Sector/dummy encodings
+---
 
-Technical signals
-
-All features are lagged so only past information is used.
-
-3. Models
-
-Two ML models were tested:
-
-✅ Ridge Regression (best performer)
-
-Stable
-
-Interpretable
-
-Resistant to multicollinearity
-
-Strong IC stability across time
-
-⚠️ XGBoost
-
-Useful for nonlinear relationships
-
-Higher variance
-
-Performed worse cross-sectionally than Ridge in this dataset
-
-Final backtest uses Ridge as the primary model.
-
-4. Walk-Forward Training
-
-For each month t:
-
-Use the prior 36 months of data as the training window
-
-Fit the model only on that period
-
-Predict stock returns for month t+1
-
-Move window forward one month
-
-Repeat
-
-This mimics real quant workflows and prevents information leakage.
-
-5. Portfolio Construction — Z-Score Weights
+### **5. Portfolio Construction — Z-Score Weights**
 
 For each month’s predicted returns:
 
-Select the highest / lowest scoring stocks
+1. Select top and/or bottom scoring stocks (based on mode)  
+2. Standardize via z-scores  
+3. Clip extreme values (default: ±3)  
+4. Normalize weights to sum to 1  
 
-Standardize via z-scores
+**Weighting modes:**
 
-Clip extreme values to avoid concentration
+- **L** → Long-only  
+- **S** → Short-only  
+- **LS** → Long–Short (long top bucket, short bottom bucket)
 
-Normalize weights
+---
 
-Weighting modes:
+## 📊 Performance Summary  
+*(2018-01-31 → 2025-10-31)*
 
-Mode	Description
-L	Long-Only: invest in top-ranked stocks only
-S	Short-Only: hold inverse positions in bottom-ranked stocks
-LS	Long-Short: go long the top bucket and short the bottom bucket
-📊 Performance Summary (2018-01-31 → 2025-10-31)
-Long-Only Portfolio (best approach)
+### **Long-Only Portfolio (Best Performer)**  
+- **Annual Return:** 1.148  
+- **Annual Volatility:** 1.49  
+- **Sharpe:** 0.77  
+- **Avg Turnover:** 0.41  
+- **Max Drawdown:** –1.096  
 
-Annual return: 1.148
-Annual vol: 1.49
-Sharpe: 0.77
-Avg turnover: 0.41
-Max drawdown: –1.096
+**Interpretation:**  
+Strong alpha on the long side — model is excellent at identifying winners.
 
-The model demonstrates strong predictive ability on the long side, producing a high Sharpe and consistent alpha.
+---
 
-Short-Only Portfolio
+### **Short-Only Portfolio**  
+- **Annual Return:** –0.378  
+- **Sharpe:** –0.59  
+- **Max Drawdown:** –2.945  
 
-Annual return: –0.378
-Sharpe: –0.59
-Max drawdown: –2.945
+**Interpretation:**  
+Model struggles to identify losers — common in equity ML due to noise, crowding, and mean-reversion.
 
-The short leg underperforms materially. Cross-sectional signals often have asymmetric predictive power, and this model is significantly better at finding winners than losers.
+---
 
-Long-Short Portfolio
+### **Long–Short Portfolio**  
+- **Annual Return:** 0.395  
+- **Sharpe:** 0.80  
+- **Max Drawdown:** –0.271  
 
-Annual return: 0.395
-Sharpe: 0.80
-Max drawdown: –0.271
+Hedging reduces volatility, but performance is diluted because the short leg loses money.
 
-Volatility decreases from hedging, so Sharpe looks healthy, but performance is diluted because the short side loses money. This confirms that the model’s alpha is concentrated in the long leg.
+---
 
-🧠 Key Insights
-✔ Predictive asymmetry
+## 🧩 Key Insights
 
-The model is good at predicting outperformers, but not underperformers.
-This is common in equity ML where short returns behave differently (crowding, mean-reversion, microstructure noise).
+- **Predictive asymmetry:**  
+  The signal is better at finding winners than losers — typical of equity ML.
 
-✔ Walk-forward CV prevents overfitting
+- **Ridge > XGBoost:**  
+  Linear regularized models outperform tree models in noisy cross-sectional datasets.
 
-Each month is predicted out-of-sample.
+- **Turnover is realistic:**  
+  ~0.41/month is typical for quant equity factors.
 
-✔ Ridge > XGBoost
+- **Alpha is concentrated in the long leg:**  
+  Short predictions behave differently (crowding, noise, microstructure effects).
 
-Linear, regularized models often outperform tree-based models in noisy cross-sectional equity datasets.
+---
 
-✔ Turnover is reasonable
+## 🛠️ Future Enhancements
 
-A turnover of ~0.41/month is typical for quant stock selection strategies.
+- Add richer fundamental datasets  
+- Try beta-neutral or sector-neutral portfolio construction  
+- PCA / autoencoder factor denoising  
+- Experiment with neural nets (TabNet, MLP, GNN)  
+- Add risk-model overlays (Barra-style)  
 
-📌 Future Improvements
+---
 
-Add richer fundamental datasets
+## ▶️ How to Run
 
-Try sector-neutral or beta-neutral portfolio construction
-
-Add PCA-denoised factor features
-
-Test neural nets (TabNet, MLP, GNN)
-
-Incorporate risk-model overlays (Barra-style)
-
-🛠 How to Run
-
-(Assuming Jupyter + Python 3.10+)
-
+```bash
 pip install -r requirements.txt
 jupyter notebook
+```
 
 
-Run notebooks in order:
+Run the notebooks in order:
 
-1 → 2 → 3 → 4 → 5
+01_data_prep.ipynb
 
-📬 Contact
+02_feature_engineering.ipynb
+
+03_modeling.ipynb
+
+04_backtest.ipynb
+
+05_report.ipynb (optional summary/plots)
+
+---
+
+## 📬 Contact
 
 Created by Aman Meda
